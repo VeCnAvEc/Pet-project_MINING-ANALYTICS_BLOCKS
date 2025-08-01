@@ -1,5 +1,5 @@
 pub enum NameSpaceApi {
-    Blocks(u64),
+    Blocks(Option<u64>),
     BlockByHash(String),
     BlockByHashCoinbase(String),
     BlockTxs(String),
@@ -10,8 +10,8 @@ pub enum NameSpaceApi {
 impl NameSpaceApi {
     pub fn get_uri_by_ns(&self) -> String {
         match self {
-            NameSpaceApi::Blocks(height) => {
-                format!("blocks/{height}")
+            NameSpaceApi::Blocks(from) => {
+                from.map_or("blocks/".to_string(), |_| format!("blocks/{from}"))
             }
             NameSpaceApi::BlockByHash(block_hash) => {
                 format!("block/{block_hash}")
