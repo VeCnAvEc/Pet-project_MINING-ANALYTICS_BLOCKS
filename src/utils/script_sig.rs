@@ -1,5 +1,4 @@
 use bitcoin::blockdata::script::ScriptBuf;
-use bitcoin::blockdata::opcodes::all::*;
 use bitcoin::blockdata::script::Instruction;
 
 #[derive(Debug)]

@@ -24,3 +24,5 @@ hex = "0.4.3"
 
 bitcoin = { version = "0.32.5", features = ["serde"] }
 log = "0.4.27"
+
+rabbitmq-stream-client = "0.4.4"

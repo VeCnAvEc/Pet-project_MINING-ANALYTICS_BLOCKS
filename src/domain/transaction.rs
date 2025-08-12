@@ -32,8 +32,8 @@ pub struct Status {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
     txid: String,
-    version: u8,
-    locktime: u16,
+    version: u64,
+    locktime: u64,
     vin: Vec<VectorInputs>,
     vout: Vec<VectorOutputs>,
     size: u32,

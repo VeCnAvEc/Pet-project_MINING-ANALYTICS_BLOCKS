@@ -2,13 +2,13 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use reqwest::Client;
 use serde_json::from_str;
-use tracing::{error, info};
+use tracing::info;
 use crate::domain::block::Block;
 use crate::domain::transaction::Transaction;
-use crate::infrastructure::collector::namespace::{build_url, NameSpaceApi};
+use crate::infrastructure::collector::namespace::NameSpaceApi;
 
 pub async fn fetch_latest_blocks(client: Arc<Client>, url: String) -> anyhow::Result<Vec<Block>> {
-    let ns = NameSpaceApi::Blocks(907905).get_uri_by_ns();
+    let ns = NameSpaceApi::Blocks(None).get_uri_by_ns();
     let url = format!("{url}{ns}");
 
     let response = client.get(url).send().await?;

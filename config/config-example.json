@@ -1,3 +1,11 @@
 {
-  "api_url": "https://mempool.space/api/"
+  "api_url": "https://mempool.space/api/",
+  "interval_analytic_blocks": 30,
+  "rabbitmq_config": {
+    "host": "localhost",
+    "port": 5552,
+    "username": "guest",
+    "password": "guest",
+    "stream_name": "any-stream-names"
+  }
 } 

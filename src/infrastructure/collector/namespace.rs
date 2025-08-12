@@ -1,8 +1,8 @@
 pub enum NameSpaceApi {
     Blocks(Option<u64>),
-    BlockByHash(String),
-    BlockByHashCoinbase(String),
-    BlockTxs(String),
+    _BlockByHash(String),
+    _BlockByHashCoinbase(String),
+    _BlockTxs(String),
     BlockTxids(String),
     TxById(String),
 }
@@ -11,15 +11,15 @@ impl NameSpaceApi {
     pub fn get_uri_by_ns(&self) -> String {
         match self {
             NameSpaceApi::Blocks(from) => {
-                from.map_or("blocks/".to_string(), |_| format!("blocks/{from}"))
+                from.map_or("blocks/".to_string(), |height| format!("blocks/{height}"))
             }
-            NameSpaceApi::BlockByHash(block_hash) => {
+            NameSpaceApi::_BlockByHash(block_hash) => {
                 format!("block/{block_hash}")
             }
-            NameSpaceApi::BlockByHashCoinbase(block_hash) => {
+            NameSpaceApi::_BlockByHashCoinbase(block_hash) => {
                 format!("block/{block_hash}/txs/0")
             }
-            NameSpaceApi::BlockTxs(block_hash) => {
+            NameSpaceApi::_BlockTxs(block_hash) => {
                 format!("block/{block_hash}/txs")
             }
             NameSpaceApi::BlockTxids(block_hash) => {
@@ -30,10 +30,4 @@ impl NameSpaceApi {
             }
         }
     }
-}
-
-pub fn build_url(basic_url: &str, ns: NameSpaceApi) -> String {
-    let uri = ns.get_uri_by_ns();
-
-    return format!("{basic_url}{uri}");
 }

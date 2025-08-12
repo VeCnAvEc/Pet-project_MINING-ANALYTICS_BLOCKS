@@ -21,4 +21,24 @@ impl Block {
     pub fn get_id(&self) -> String {
         self.id.clone()
     }
+
+    pub fn get_height(&self) -> u32 {
+        self.height as u32
+    }
+
+    pub fn get_timestamp(&self) -> u64 {
+        self.timestamp
+    }
+
+    pub fn get_size(&self) -> u32 {
+        self.size as u32
+    }
+
+    pub fn get_merkle_root(&self) -> &str {
+        &self.merkle_root
+    }
+
+    pub fn get_difficulty(&self) -> f64 {
+        self.difficulty
+    }
 }
