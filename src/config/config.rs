@@ -7,7 +7,8 @@ use serde_json::from_reader;
 pub struct Config {
     api_url: String,
     interval_analytic_blocks: u64,
-    rabbitmq_config: RabbitMqConfig
+    rabbitmq_config: RabbitMqConfig,
+    database_config: DatabaseConfig
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,7 +17,12 @@ pub struct RabbitMqConfig {
     port: u16,
     username: Option<String>,
     password: Option<String>,
-    stream_name: String
+    stream_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    url: String
 }
 
 impl RabbitMqConfig {
@@ -39,6 +45,10 @@ impl RabbitMqConfig {
     pub fn get_stream_name(&self) -> &str {
         &self.stream_name
     }
+}
+
+impl DatabaseConfig {
+
 }
 
 impl Config {
@@ -70,5 +80,9 @@ impl Config {
 
     pub fn get_rabbitmq_config(&self) -> &RabbitMqConfig {
         &self.rabbitmq_config
+    }
+
+    pub fn get_database_url(&self) -> &str {
+        &self.database_config.url
     }
 }

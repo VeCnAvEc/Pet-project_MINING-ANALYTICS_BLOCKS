@@ -2,6 +2,11 @@
 name = "mining-mining-analytics_blocks"
 version = "0.1.0"
 edition = "2024"
+default-run = "mining-mining-analytics_blocks"
+
+[[bin]]
+name = "main_reader"
+path = "src/main_reader.rs"
 
 [dependencies]
 tokio = { version = "1.44.2", features = ["full"] }
@@ -16,7 +21,7 @@ console-subscriber = "0.4.1"
 # HTTP request
 reqwest = { version = "0.12.15", features = ["json", "__tls"] }
 
-chrono = "0.4.40"
+chrono = { version = "0.4.40", features = ["serde"] }
 uuid = "1.16.0"
 anyhow = "1.0.98"
 
@@ -24,5 +29,10 @@ hex = "0.4.3"
 
 bitcoin = { version = "0.32.5", features = ["serde"] }
 log = "0.4.27"
+env_logger = "0.11.3"
+futures-util = "0.3"
 
 rabbitmq-stream-client = "0.4.4"
+
+# database
+sqlx = { version = "0.8.5", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }

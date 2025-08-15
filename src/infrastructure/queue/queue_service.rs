@@ -61,7 +61,7 @@ impl QueueService {
             block_hash: block.get_id().to_string(),
             timestamp: block.get_timestamp(),
             size: block.get_size(),
-            merkle_root: block.get_size().to_string(),
+            merkle_root: block.get_merkle_root().to_string(),
             difficulty: block.get_difficulty(),
             coinbase_info: CoinbaseInfo {
                 main_reward: coinbase.get_main_reward_value(),

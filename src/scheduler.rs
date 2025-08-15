@@ -41,8 +41,11 @@ impl SchedulerManager {
 
     pub async fn wait_for_all_tasks(&mut self) {
         for task in self.tasks.drain(..) {
-            if let Err(e) = task.await {
-                error!("Task field: {}", e);
+            match task.await {
+                Ok(()) => {}
+                Err(e) if e.is_cancelled() => error!("Task was cancelled"),
+                Err(e) if e.is_panic() => error!("Task panicked: {e:?}"),
+                Err(e) => error!("Join error: {e:?}"),
             }
         }
     }

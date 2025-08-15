@@ -84,7 +84,17 @@ impl BlockWatcher {
         let bytes = hex::decode(script_sig).expect("Invalid hex");
         let script = ScriptBuf::from_bytes(bytes);
 
-        let parsed_script = ParsedScriptSig::from(&script).unwrap();
+        let parsed_script_opt = ParsedScriptSig::from(&script);
+
+        let parsed_script = match parsed_script_opt {
+            None => {
+                error!("Error parsed scriptSig.");
+                return
+            },
+            Some(parsed_script) => {
+                parsed_script
+            }
+        };
 
         let main_reward = coinbase.get_main_reward_value();
         let address_miner = coinbase.get_main_reward_address();

@@ -17,11 +17,12 @@ pub async fn fetch_latest_blocks(client: Arc<Client>, url: String) -> anyhow::Re
     let blocks_result: serde_json::Result<Vec<Block>> = from_str(&body);
 
     let blocks = if blocks_result.is_ok() {
-        blocks_result.unwrap()
+        blocks_result?
     } else {
         vec![]
     };
-    return Ok(blocks);
+
+    Ok(blocks)
 }
 
 pub async fn fetch_get_coinbase_tx_id(client: Arc<Client>, url: String, hash: String) -> anyhow::Result<String> {
