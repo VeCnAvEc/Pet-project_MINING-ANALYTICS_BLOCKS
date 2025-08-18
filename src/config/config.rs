@@ -7,6 +7,7 @@ use serde_json::from_reader;
 pub struct Config {
     api_url: String,
     interval_analytic_blocks: u64,
+    interval_read_rabbitmq_messages: u64,
     rabbitmq_config: RabbitMqConfig,
     database_config: DatabaseConfig
 }
@@ -76,6 +77,10 @@ impl Config {
 
     pub fn get_interval_analytic_blocks(&self) -> u64 {
         self.interval_analytic_blocks
+    }
+
+    pub fn get_interval_read_rabbitmq_messages(&self) -> u64 {
+        self.interval_read_rabbitmq_messages
     }
 
     pub fn get_rabbitmq_config(&self) -> &RabbitMqConfig {

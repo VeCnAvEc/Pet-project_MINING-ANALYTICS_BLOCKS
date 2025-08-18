@@ -30,8 +30,8 @@ impl Block {
         self.timestamp
     }
 
-    pub fn get_size(&self) -> u32 {
-        self.size as u32
+    pub fn get_size(&self) -> u64 {
+        self.size
     }
 
     pub fn get_merkle_root(&self) -> &str {
@@ -40,5 +40,9 @@ impl Block {
 
     pub fn get_difficulty(&self) -> f64 {
         self.difficulty
+    }
+
+    pub fn get_tx_count(&self) -> u64 {
+        self.tx_count
     }
 }

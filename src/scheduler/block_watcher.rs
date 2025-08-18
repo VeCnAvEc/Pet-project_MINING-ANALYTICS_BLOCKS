@@ -60,6 +60,7 @@ impl BlockWatcher {
             .await
             .map_err(|e| anyhow::anyhow!("Get coinbase error: {}", e))?;
 
+
         let height = block.get_height();
         let timestamp = block.get_timestamp();
         let size = block.get_size();
@@ -85,6 +86,7 @@ impl BlockWatcher {
         let script = ScriptBuf::from_bytes(bytes);
 
         let parsed_script_opt = ParsedScriptSig::from(&script);
+
 
         let parsed_script = match parsed_script_opt {
             None => {

@@ -15,11 +15,11 @@ serde = "1.0.219"
 serde_json = "1.0.140"
 
 tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
-console-subscriber = "0.4.1"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+console-subscriber = { version = "0.4.1", optional = true }
 
 # HTTP request
-reqwest = { version = "0.12.15", features = ["json", "__tls"] }
+reqwest = { version = "0.12.15", features = ["json"] }
 
 chrono = { version = "0.4.40", features = ["serde"] }
 uuid = "1.16.0"
@@ -35,4 +35,7 @@ futures-util = "0.3"
 rabbitmq-stream-client = "0.4.4"
 
 # database
-sqlx = { version = "0.8.5", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+sqlx = { version = "0.8.5", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "macros"] }
+
+[features]
+console = ["dep:console-subscriber"]

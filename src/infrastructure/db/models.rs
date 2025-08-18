@@ -17,7 +17,12 @@ pub struct Transaction {
     pub id: i32,
     pub txid: String,
     pub block_hash: Option<String>,
-    pub fee: i64,
+    pub full_reward: u64,
+    pub fee: u64,
     pub size: i32,
+    pub is_coinbase: bool,
+    pub main_reward: Option<i64>,
+    pub miner_address: Option<String>,
+    pub guessed_miner: Option<String>,
     pub created_at: DateTime<Utc>
 }

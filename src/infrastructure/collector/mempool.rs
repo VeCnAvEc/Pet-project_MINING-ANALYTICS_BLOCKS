@@ -50,7 +50,6 @@ pub async fn fetch_get_coinbase(client: Arc<Client>, url: String, coinbase_txid:
     let vin = coinbase_tx.get_vin_by_id(0).unwrap();
     let is_coinbase = vin.is_coinbase;
     if is_coinbase {
-        info!("it is coinbase!");
         Ok(coinbase_tx)
     } else {
         Err(anyhow!("it isn't coinbase"))

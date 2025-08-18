@@ -1,5 +1,6 @@
 use bitcoin::blockdata::script::ScriptBuf;
 use bitcoin::blockdata::script::Instruction;
+use log::{error, warn, info};
 
 #[derive(Debug)]
 pub struct ParsedScriptSig {
@@ -25,6 +26,7 @@ impl ParsedScriptSig {
         }
 
         if raw_pushes.len() < 2 {
+            error!("Error parse scriptsig: too little push");
             return None; // слишком мало push'ей
         }
 
@@ -51,6 +53,9 @@ impl ParsedScriptSig {
         let label_idx = if timestamp_sec.is_some() { 2 } else { 1 };
 
         let (guessed_miner, extra_nonce) = {
+            if raw_pushes.get(label_idx).is_none() {
+                error!("Error parse scriptsig: &raw_pushes.get(label_idx)?")
+            }
             let combined = &raw_pushes.get(label_idx)?;
             let split_at = combined.iter()
                 .position(|&b| !b.is_ascii_graphic() && b != b' ') // найдём конец printable

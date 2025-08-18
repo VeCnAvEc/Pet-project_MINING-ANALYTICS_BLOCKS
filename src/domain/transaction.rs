@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::utils::block_reward::BlockRewardCalculator;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VectorInputs {
@@ -18,13 +19,13 @@ pub struct VectorOutputs {
     scriptpubkey_asm: String,
     scriptpubkey_type: String,
     scriptpubkey_address: Option<String>,
-    value: u64
+    value: i64
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Status {
     confirmed: bool,
-    block_height: u64,
+    block_height: i64,
     block_hash: String,
     block_time: u64
 }
@@ -43,7 +44,6 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    // Новые методы для поиска основного выхода с максимальной наградой
     pub fn get_main_reward_vout(&self) -> Option<&VectorOutputs> {
         self.vout.iter()
             .filter(|vout| vout.value > 0) // Исключаем OP_RETURN (value = 0)
@@ -55,17 +55,17 @@ impl Transaction {
             .map(|vout| vout.get_scriptpubkey_address())
     }
 
-    pub fn get_main_reward_value(&self) -> Option<u64> {
+    pub fn get_main_reward_value(&self) -> Option<i64> {
         self.get_main_reward_vout()
             .map(|vout| vout.get_value())
     }
 
-    pub fn get_full_reward_value(&self) -> u64 {
+    pub fn get_full_reward_value(&self) -> i64 {
         self.vout.iter()
             .fold(0, |acc, vout| acc + vout.value)
     }
 
-    pub fn get_rewards_value_and_address(&self) -> Vec<(u64, String)> {
+    pub fn get_rewards_value_and_address(&self) -> Vec<(i64, String)> {
         self.vout.iter()
             .filter(|vout| vout.value > 0) // Исключаем OP_RETURN (value = 0)
             .filter_map(|vout| {
@@ -89,8 +89,29 @@ impl Transaction {
         self.vin.get(id)
     }
 
+    pub fn get_each_vin(&self) -> &Vec<VectorInputs> { &self.vin }
+
     pub fn get_status(&self) -> &Status {
         &self.status
+    }
+
+    pub fn calculate_fee(&self) -> Option<i64> {
+        if self.vin.is_empty() || !self.vin[0].is_coinbase {
+            return None;
+        }
+
+        let block_height = self.status.block_height;
+        // Получаем текущее вознагрождение по высоте блока
+        let current_block_reward = BlockRewardCalculator::calculate_block_reward(block_height);
+        // Получаем полное вознагрождение за блок
+        let total_output_value = self.get_full_reward_value();
+
+        if total_output_value > current_block_reward {
+            // Высчитываем комиссию майнеров, для майнера который нашёл блок.
+            Some(total_output_value - current_block_reward)
+        } else {
+            Some(0)
+        }
     }
 }
 
@@ -99,7 +120,7 @@ impl VectorOutputs {
         &self.scriptpubkey_address
     }
 
-    pub fn get_value(&self) -> u64 {
+    pub fn get_value(&self) -> i64 {
         self.value
     }
 }

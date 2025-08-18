@@ -42,14 +42,16 @@ impl RabbitMQClient {
                 ?
         );
 
+        // Сначала создаем стримы
+        RabbitMQClient::create_stream(&environment, block_analytics_stream).await;
+        RabbitMQClient::create_stream(&environment, mining_notifications_stream).await;
+
+        // Потом создаем producer
         let analytics_block_producer = Arc::new(Mutex::new(environment
             .producer()
             .name(mining_analytics_producer_name)
             .build(block_analytics_stream)
             .await?));
-
-        RabbitMQClient::create_stream(&environment, block_analytics_stream).await;
-        RabbitMQClient::create_stream(&environment, mining_notifications_stream).await;
 
         info!("RabbitMq client initialized successfully");
 
