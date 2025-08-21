@@ -2,30 +2,29 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Executor, PgPool, Row};
+use sqlx::{PgPool, Pool, Postgres, Row};
 
 use anyhow::Result;
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 use log::info;
-
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Receiver;
 use tokio::time::{timeout, Duration as TokioDuration};
 
-use crate::infrastructure::queue::queue_service::{BlockAnalyticsMessage, CoinbaseInfo};
-
-#[derive(sqlx::FromRow)]
-struct BlockId {
-    id: i32,
-}
+use crate::infrastructure::queue::queue_service::BlockAnalyticsMessage;
 
 pub struct Database {
-    pool: PgPool
+    pool: Arc<Pool<Postgres>>,
+    pub sender: mpsc::Sender<BlockAnalyticsMessage>,
+    // pub receiver: Receiver<BlockAnalyticsMessage>
 }
 
 impl Database {
-    pub async fn new(database_url: &str) -> Result<Arc<Self>> {
+    pub async fn new(database_url: &str) -> Result<(Arc<Self>, Receiver<BlockAnalyticsMessage>)> {
         info!("Connected with PostgreSQL");
+        let (sender, receiver) = mpsc::channel::<BlockAnalyticsMessage>(1000);
 
         let pool = PgPoolOptions::new()
             .max_connections(20)
@@ -43,30 +42,25 @@ impl Database {
 
         info!("Successfully connected to PostgreSQL");
 
-        Ok( Arc::new(Self { pool }) )
+        let database = Arc::new(Self { pool: Arc::new(pool), sender });
+
+        Ok((database, receiver))
     }
 
-    pub fn pool(&self) -> &PgPool { &self.pool }
+    pub fn pool(&self) -> Arc<PgPool> { Arc::clone(&self.pool) }
 
-    pub async fn run_migration(&self) -> Result<()> {
-        info!("Running migrations");
-        sqlx::migrate!("./migrations").run(&self.pool).await?;
-        info!("Migration was completed successfully.");
-        Ok(())
-    }
+    // pub async fn run_migration(&self) -> Result<()> {
+    //     info!("Running migrations");
+    //     sqlx::migrate!("./migrations").run(&self.pool).await?;
+    //     info!("Migration was completed successfully.");
+    //     Ok(())
+    // }
 
     pub async fn save_block_and_coinbase(
-        &self,
+        pool: Arc<PgPool>,
         message: &BlockAnalyticsMessage,
     ) -> Result<(i32, i32)> {
-        info!(
-            "save_block_and_coinbase(): pool before begin: size={}, idle={}, acquired={}",
-            self.pool.size(),
-            self.pool.num_idle(),
-            (self.pool.size() as i32) - (self.pool.num_idle() as i32)
-        );
-
-        let mut tx = self.pool.begin().await?;
+        let mut tx = pool.begin().await?;
 
         let ts = chrono::DateTime::from_timestamp(message.timestamp as i64, 0)
             .ok_or_else(|| anyhow::anyhow!("bad unix timestamp: {}", message.timestamp))?;
@@ -74,26 +68,18 @@ impl Database {
         let upsert_block_sql = r#"
             INSERT INTO blocks (hash, height, "timestamp", transactions_count, created_at)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (hash) DO UPDATE
-              SET height = EXCLUDED.height,
-                  "timestamp" = EXCLUDED."timestamp",
-                  transactions_count = EXCLUDED.transactions_count
+            ON CONFLICT (hash) DO NOTHING
             RETURNING id
         "#;
 
-        info!("Send a new row to db!");
-        let block_row = timeout(
-            TokioDuration::from_secs(5),
-            sqlx::query(upsert_block_sql)
-                .bind(&message.block_hash)
-                .bind(message.height as i64)
-                .bind(ts)
-                .bind(message.transactions_count as i64)
-                .bind(Utc::now())
-                .fetch_one(&mut *tx),
-        )
-        .await??;
-
+        let block_row = sqlx::query(upsert_block_sql)
+            .bind(&message.block_hash)
+            .bind(message.height as i64)
+            .bind(ts)
+            .bind(message.transactions_count as i64)
+            .bind(Utc::now())
+            .fetch_one(&mut *tx)
+            .await?;
         let block_id = block_row.get::<i32, _>("id");
         info!("Block upserted {} (hash={}) with id={}", message.height, message.block_hash, block_id);
 
@@ -106,34 +92,24 @@ impl Database {
                 main_reward, miner_address, full_reward, guessed_miner, created_at
             )
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-            ON CONFLICT (txid) DO UPDATE
-              SET block_hash    = EXCLUDED.block_hash,
-                  fee           = EXCLUDED.fee,
-                  size          = EXCLUDED.size,
-                  is_coinbase   = EXCLUDED.is_coinbase,
-                  main_reward   = EXCLUDED.main_reward,
-                  miner_address = EXCLUDED.miner_address,
-                  full_reward   = EXCLUDED.full_reward,
-                  guessed_miner = EXCLUDED.guessed_miner
+            ON CONFLICT (txid) DO NOTHING
             RETURNING id
         "#;
 
-        let tx_row = timeout(
-            TokioDuration::from_secs(5),
-            sqlx::query(upsert_tx_sql)
-                .bind(&txid)
-                .bind(&message.block_hash)
-                .bind(coinbase.fee)
-                .bind(message.size as i64)
-                .bind(true)
-                .bind(coinbase.main_reward)
-                .bind(coinbase.miner_address.clone())
-                .bind(coinbase.full_reward)
-                .bind(coinbase.guessed_miner.clone())
-                .bind(Utc::now())
-                .fetch_one(&mut *tx),
-        )
-        .await??;
+        let tx_row = sqlx::query(upsert_tx_sql)
+            .bind(&txid)
+            .bind(&message.block_hash)
+            .bind(coinbase.fee)
+            .bind(message.size as i64)
+            .bind(true)
+            .bind(coinbase.main_reward)
+            .bind(coinbase.miner_address.clone())
+            .bind(coinbase.full_reward)
+            .bind(coinbase.guessed_miner.clone())
+            .bind(Utc::now())
+            .fetch_one(&mut *tx)
+            .await?;
+
 
         let transaction_id = tx_row.get::<i32, _>("id");
         info!(
@@ -144,5 +120,12 @@ impl Database {
         timeout(TokioDuration::from_secs(3), tx.commit()).await??;
 
         Ok((block_id, transaction_id))
+    }
+
+    pub async fn queue_messages_reader(mut receiver: Receiver<BlockAnalyticsMessage>, pool: Arc<PgPool>) {
+        while let Some(message) = receiver.recv().await {
+            let pool = Arc::clone(&pool);
+            let _ = Database::save_block_and_coinbase(pool, &message).await;
+        }
     }
 }

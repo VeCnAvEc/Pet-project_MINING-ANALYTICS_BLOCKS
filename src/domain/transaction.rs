@@ -76,6 +76,7 @@ impl Transaction {
             .collect()
     }
 
+    #[allow(dead_code)]
     pub fn get_vouts(&self) -> &Vec<VectorOutputs> {
         &self.vout
     }
@@ -89,8 +90,10 @@ impl Transaction {
         self.vin.get(id)
     }
 
+    #[allow(dead_code)]
     pub fn get_each_vin(&self) -> &Vec<VectorInputs> { &self.vin }
 
+    #[allow(dead_code)]
     pub fn get_status(&self) -> &Status {
         &self.status
     }
@@ -128,11 +131,5 @@ impl VectorOutputs {
 impl VectorInputs {
     pub fn get_vin_scriptsig(&self) -> &str {
         &self.scriptsig
-    }
-}
-
-impl Status {
-    pub fn get_block_time(&self) -> u64 {
-        self.block_time
     }
 }

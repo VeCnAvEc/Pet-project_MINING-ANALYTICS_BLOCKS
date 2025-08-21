@@ -8,11 +8,11 @@ use anyhow::Result;
 use futures_util::TryStreamExt;
 use rabbitmq_stream_client::Consumer;
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
 use crate::domain::block::Block;
 use crate::domain::transaction::Transaction;
-use crate::infrastructure::db::postgres::Database;
 use crate::infrastructure::queue::stream_rabbitmq::RabbitMQClient;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,7 +40,8 @@ pub struct CoinbaseInfo {
 
 pub struct QueueService {
     pub(crate) rabbitmq_client: Arc<RabbitMQClient>,
-    pub sender: mpsc::Sender<BlockAnalyticsMessage>,
+    pub sender: Sender<BlockAnalyticsMessage>,
+    #[allow(dead_code)]
     worker_handle: Option<JoinHandle<()>>
 }
 
@@ -91,32 +92,13 @@ impl QueueService {
         }
     }
 
-    pub async fn send_notification(&self, message: &str) -> Result<()> {
-        #[derive(Serialize)]
-        struct Notification {
-            message: String,
-            timestamp: u64,
-        }
-
-        let notification_message = Notification {
-            message: message.to_string(),
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                ?.as_secs()
-        };
-
-        // self.rabbitmq_client.send_batch_notification_messages(&notification_message).await?;
-
-        Ok(())
-    }
-
-    pub async fn queue_worker(mut reciver: mpsc::Receiver<BlockAnalyticsMessage>, rabbitmq_client: Arc<RabbitMQClient>) {
+    pub async fn queue_worker(mut receiver: mpsc::Receiver<BlockAnalyticsMessage>, rabbitmq_client: Arc<RabbitMQClient>) {
         info!("Queue worker started!");
         let batch_size: usize = 10;
 
         let mut batch_analytics_messages = Vec::new();
 
-        while let Some(message) = reciver.recv().await {
+        while let Some(message) = receiver.recv().await {
             batch_analytics_messages.push(message);
 
             if batch_analytics_messages.len() >= batch_size {
@@ -137,7 +119,7 @@ impl QueueService {
         info!("Queue worker stopped");
     }
 
-    pub async fn read_messages_from_rabbitmq_mining_analytics(mut consumer: Consumer, db: Arc<Database>) {
+    pub async fn read_messages_from_rabbitmq_mining_analytics(mut consumer: Consumer, db_sender: Sender<BlockAnalyticsMessage>) {
         loop {
             let delivery_result = consumer.try_next().await;
             if let Ok(Some(delivery)) = delivery_result {
@@ -154,12 +136,12 @@ impl QueueService {
 
                         let block_analytic_message = block_analytic_message_res.unwrap();
 
-                        let db = Arc::clone(&db);
-                        tokio::spawn(async move {
+                        let _ = db_sender.send(block_analytic_message).await;
+/*                        tokio::spawn(async move {
                             if let Err(err) = db.save_block_and_coinbase(&block_analytic_message).await {
                                 error!("Error saving block+coinbase atomically: {}", err);
                             }
-                        });
+                        });*/
                     }
                 }
             }

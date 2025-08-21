@@ -4,32 +4,26 @@ mod application;
 mod domain;
 mod utils;
 mod scheduler;
+mod logs;
 
 use std::sync::Arc;
+
 use log::error;
+
 use reqwest::Client;
+
 use tracing::info;
-use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{fmt, EnvFilter};
-use tracing_subscriber::layer::SubscriberExt;
+
 use crate::config::config::Config;
 use crate::infrastructure::db::postgres::Database;
 use crate::infrastructure::queue::queue_service::QueueService;
 use crate::infrastructure::queue::stream_rabbitmq::RabbitMQClient;
+use crate::logs::init_logs::init_tracing;
 use crate::scheduler::SchedulerManager;
 
 #[tokio::main]
 async fn main() {
-    let subscribe = tracing_subscriber::fmt()
-        .compact()
-        .with_file(true)
-        .with_line_number(true)
-        .with_thread_ids(true)
-        .with_target(false)
-        .finish();
-
-    subscribe.init();
-
+    init_tracing();
     let reqwest_client = Arc::new(Client::new());
 
     let config = Arc::new(Config::new());

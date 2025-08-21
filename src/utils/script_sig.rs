@@ -1,14 +1,19 @@
 use bitcoin::blockdata::script::ScriptBuf;
 use bitcoin::blockdata::script::Instruction;
-use log::{error, warn, info};
+use log::error;
 
 #[derive(Debug)]
 pub struct ParsedScriptSig {
+    #[allow(dead_code)]
     pub block_height: u32,
     pub guessed_miner: String,
+    #[allow(dead_code)]
     pub timestamp_sec: Option<u64>,
+    #[allow(dead_code)]
     pub extra_nonce: Vec<u8>,
+    #[allow(dead_code)]
     pub coinbase_raw: Vec<u8>,
+    #[allow(dead_code)]
     pub raw_pushes: Vec<Vec<u8>>,
 }
 

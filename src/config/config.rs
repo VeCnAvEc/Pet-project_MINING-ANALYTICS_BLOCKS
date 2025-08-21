@@ -48,10 +48,6 @@ impl RabbitMqConfig {
     }
 }
 
-impl DatabaseConfig {
-
-}
-
 impl Config {
     pub fn new() -> Config {
         let default_path = "./config/config.json";
@@ -77,10 +73,6 @@ impl Config {
 
     pub fn get_interval_analytic_blocks(&self) -> u64 {
         self.interval_analytic_blocks
-    }
-
-    pub fn get_interval_read_rabbitmq_messages(&self) -> u64 {
-        self.interval_read_rabbitmq_messages
     }
 
     pub fn get_rabbitmq_config(&self) -> &RabbitMqConfig {

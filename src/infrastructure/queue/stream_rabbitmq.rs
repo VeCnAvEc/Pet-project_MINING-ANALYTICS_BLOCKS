@@ -7,11 +7,12 @@ use log::{error, info};
 use tokio::sync::Mutex;
 
 use rabbitmq_stream_client::{Dedup, Environment, Producer};
-use rabbitmq_stream_client::types::{ByteCapacity, Message, OffsetSpecification, ResponseCode};
-use rabbitmq_stream_client::error::{ConsumerCreateError, StreamCreateError};
+use rabbitmq_stream_client::types::{ByteCapacity, Message, ResponseCode};
+use rabbitmq_stream_client::error::StreamCreateError;
 
 use crate::config::config::RabbitMqConfig;
 
+#[allow(dead_code)]
 pub struct RabbitMQClient {
     environment: Arc<Environment>,
     block_analytics_producer: Arc<Mutex<Producer<Dedup>>>,
@@ -97,16 +98,8 @@ impl RabbitMQClient {
         self.send_to_stream(data).await
     }
 
-    pub async fn send_batch_notification_messages<T: serde::Serialize>(&self, data: &Vec<T>) -> Result<()> {
-        self.send_to_stream(data).await
-    }
-
     pub fn get_environment(&self) -> Arc<Environment> {
         Arc::clone(&self.environment)
-    }
-
-    pub fn get_stream_name(&self) -> &str {
-        &self.stream_name
     }
 
     pub async fn create_stream(environment: &Environment, consumer_name: &str) {

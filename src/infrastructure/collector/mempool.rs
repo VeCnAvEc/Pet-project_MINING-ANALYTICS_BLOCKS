@@ -2,7 +2,6 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use reqwest::Client;
 use serde_json::from_str;
-use tracing::info;
 use crate::domain::block::Block;
 use crate::domain::transaction::Transaction;
 use crate::infrastructure::collector::namespace::NameSpaceApi;

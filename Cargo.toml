@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 default-run = "mining-mining-analytics_blocks"
 
-[[bin]]
-name = "main_reader"
-path = "src/main_reader.rs"
+[features]
+default = []
+console = ["dep:console-subscriber"]   # включаем по фиче
 
 [dependencies]
-tokio = { version = "1.44.2", features = ["full"] }
+tokio = { version = "1.44.2", features = ["full", "tracing"] }
 
 serde = "1.0.219"
 serde_json = "1.0.140"
@@ -36,6 +36,3 @@ rabbitmq-stream-client = "0.4.4"
 
 # database
 sqlx = { version = "0.8.5", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "macros"] }
-
-[features]
-console = ["dep:console-subscriber"]
